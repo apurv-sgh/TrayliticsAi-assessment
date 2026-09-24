@@ -1,16 +1,46 @@
-# React + Vite
+# Matchwise
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Matchwise is an AI-ready MERN workspace for comparing a resume with a job description and turning the result into a clear, actionable match report.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React + Vite:** SPA dashboard with Framer Motion, Recharts, Lucide icons, and a Tailwind-ready build.
+- **Express + Node:** REST API under `server/`, global error handling, request validation, JWT sessions in HTTP-only cookies, and Socket.io events.
+- **MongoDB + Mongoose:** validated `User` and `Analysis` models with indexes for email, user activity, status, and reverse chronological analysis history.
 
-## React Compiler
+## Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The frontend ships the product dashboard as a polished, interactive first slice. The upload dropzone, job description editor, responsive navigation, score visualizations, skill breakdown, and recent analysis list are ready to connect to the API.
 
-## Expanding the Oxlint configuration
+The API is organized by feature:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- `server/config/db.js`: MongoDB connection.
+- `server/models/`: strict Mongoose schemas.
+- `server/middleware/auth.js`: JWT signing and cookie authentication.
+- `server/routes/auth.js`: register, login, logout, and current user.
+- `server/routes/analyses.js`: filtered analysis history, creation, and metrics.
+- `server/index.js`: Express, CORS, Socket.io, health check, and global error handling.
+
+## Run locally
+
+```bash
+npm install
+copy .env.example .env
+npm run dev
+npm run server:dev
+```
+
+Use `npm run dev:full` to run Vite and the API together. MongoDB is optional for viewing the frontend; API persistence requires `MONGODB_URI`.
+
+## API surface
+
+- `GET /api/health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/analyses?search=&status=&sort=`
+- `POST /api/analyses`
+- `GET /api/analyses/metrics`
+
+The next backend integration step is to replace the demo score payload with a document extraction and analysis worker. The current API shape already supports matched skills, missing skills, score, queued status, and real-time `analysis:created` updates.

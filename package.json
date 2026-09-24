@@ -1,10 +1,13 @@
 {
-  "name": "vite-scaffold",
+  "name": "matchwise",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node server/index.js",
+    "server:dev": "nodemon server/index.js",
+    "dev:full": "concurrently \"vite\" \"nodemon server/index.js\"",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -22,15 +25,20 @@
     "multer": "^2.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-is": "^19.3.0",
     "react-router-dom": "^7.18.4",
     "recharts": "^3.10.1",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "nodemon": "^3.1.14",
     "oxlint": "^1.81.0",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.3.0"
   }
 }
