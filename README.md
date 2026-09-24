@@ -1,46 +1,134 @@
-# Matchwise
+# CareerLens AI
 
-Matchwise is an AI-ready MERN workspace for comparing a resume with a job description and turning the result into a clear, actionable match report.
+CareerLens AI compares a resume with a job description and explains the alignment using explicit evidence. It identifies strong matches, partial/unclear matches, missing requirements, score components, and next-step recommendations.
 
-## Stack
+## Features
 
-- **React + Vite:** SPA dashboard with Framer Motion, Recharts, Lucide icons, and a Tailwind-ready build.
-- **Express + Node:** REST API under `server/`, global error handling, request validation, JWT sessions in HTTP-only cookies, and Socket.io events.
-- **MongoDB + Mongoose:** validated `User` and `Analysis` models with indexes for email, user activity, status, and reverse chronological analysis history.
+- PDF and DOCX resume upload with MIME and 5 MB limits.
+- Deterministic resume/JD extraction and skill normalization (`React.js` -> `React`, `Mongo` -> `MongoDB`, `JS` -> `JavaScript`).
+- Evidence-based matching. Missing skills are reported as **not clearly present**, never inferred as owned.
+- Configurable weighted compatibility score for required skills, preferred skills, experience, keywords, and education.
+- Optional server-side Gemini explanation and recommendation layer with deterministic fallback.
+- Persisted resumes and analyses for authenticated users.
+- Demo analysis endpoint for presentations without an account.
+- Socket.io event emitted after a persisted analysis is created.
+- Responsive SaaS dashboard with score visualization, skill chips, chart, evidence rows, loading states, and actionable errors.
 
 ## Architecture
 
-The frontend ships the product dashboard as a polished, interactive first slice. The upload dropzone, job description editor, responsive navigation, score visualizations, skill breakdown, and recent analysis list are ready to connect to the API.
-
-The API is organized by feature:
-
-- `server/config/db.js`: MongoDB connection.
-- `server/models/`: strict Mongoose schemas.
-- `server/middleware/auth.js`: JWT signing and cookie authentication.
-- `server/routes/auth.js`: register, login, logout, and current user.
-- `server/routes/analyses.js`: filtered analysis history, creation, and metrics.
-- `server/index.js`: Express, CORS, Socket.io, health check, and global error handling.
-
-## Run locally
-
-```bash
-npm install
-copy .env.example .env
-npm run dev
-npm run server:dev
+```text
+React/Vite dashboard
+        |
+        | multipart upload / JSON
+        v
+Express API + security middleware
+        |
+        +--> documentParser (PDF/DOCX)
+        +--> extractionService (resume/JD profiles)
+        +--> skillCatalog (normalization)
+        +--> matchingService (evidence comparison)
+        +--> scoringService (deterministic weighted score)
+        +--> aiService (optional Gemini explanations)
+        +--> Mongoose (Resume, Analysis, User)
 ```
 
-Use `npm run dev:full` to run Vite and the API together. MongoDB is optional for viewing the frontend; API persistence requires `MONGODB_URI`.
+### Folder structure
 
-## API surface
+- `src/`: React dashboard and visual system.
+- `server/index.js`: Express, Helmet, CORS, rate limiting, Socket.io, and error handling.
+- `server/routes/`: auth, history/metrics, and analysis endpoints.
+- `server/services/`: document parsing, extraction, normalization, matching, scoring, and AI.
+- `server/models/`: Mongoose User, Resume, and Analysis schemas.
+- `server/validators/`: Zod request schemas.
+- `test/`: Node test runner coverage for normalization, matching, evidence, and score bounds.
+
+## Stack
+
+React 19, Vite, Tailwind CSS, Framer Motion, Recharts, Lucide, Express 5, MongoDB/Mongoose, Multer, PDF Parse, Mammoth, Socket.io, JWT, Helmet, express-rate-limit, Zod, and Gemini SDK.
+
+## Local setup
+
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run dev:full
+```
+
+The frontend runs on `http://localhost:5173`. The API runs on `http://localhost:4000`. MongoDB is required for registration, authenticated uploads, and persistence. The demo endpoint works without MongoDB.
+
+Useful commands:
+
+```powershell
+npm run dev          # frontend
+npm run server:dev   # API with nodemon
+npm run dev:full     # both
+npm run build        # production frontend build
+npm run lint         # Oxlint
+npm test             # matching service tests
+```
+
+## Environment variables
+
+Copy `.env.example` to `.env` and set:
+
+- `MONGODB_URI`: MongoDB connection string.
+- `JWT_SECRET`: long random secret; required for auth.
+- `PORT`: API port, default `4000`.
+- `CLIENT_URL`: allowed frontend origin.
+- `GEMINI_API_KEY`: optional server-only Gemini key.
+- `GEMINI_MODEL`: optional model name.
+- `SCORING_WEIGHTS_JSON`: optional JSON object overriding score weights.
+
+Never put Gemini keys, JWT secrets, or MongoDB credentials in `src/` or commit them.
+
+## API
+
+Public:
 
 - `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET /api/analyses?search=&status=&sort=`
-- `POST /api/analyses`
-- `GET /api/analyses/metrics`
+- `GET /api/analyze/demo`
 
-The next backend integration step is to replace the demo score payload with a document extraction and analysis worker. The current API shape already supports matched skills, missing skills, score, queued status, and real-time `analysis:created` updates.
+Authenticated with the HTTP-only `access_token` cookie:
+
+- `GET /api/auth/me`
+- `POST /api/analyze` with multipart fields `resume`, `roleTitle`, `company`, and `jobDescription`.
+- `GET /api/analyses?search=&status=&sort=`
+- `GET /api/analyses/:id`
+- `GET /api/analyses/metrics`
+- `DELETE /api/analyses/:id`
+
+The server calculates the score after extraction and matching. Clients cannot submit a trusted score.
+
+## AI behavior
+
+Gemini is isolated in `server/services/aiService.js` and only receives structured profiles/comparison data. Its output is parsed and constrained to a summary plus recommendations. Invalid JSON, rate limits, missing keys, timeouts, and provider errors fall back to deterministic explanations. Gemini never writes to MongoDB and never determines the final score.
+
+## Security
+
+- HTTP-only, same-site auth cookie.
+- Password hashing with bcrypt.
+- Helmet security headers and CORS origin restriction.
+- API rate limiting.
+- Multer memory upload with MIME, extension, file-count, and size validation.
+- Zod validation for analysis metadata.
+- Escaped search expressions and allow-listed sort fields.
+- Sanitized error responses without stack traces or resume contents.
+- Resume raw text is used for matching but is not persisted in the Analysis profile.
+
+## Deployment
+
+Build the frontend with `npm run build` and serve `dist/` from a static host. Deploy the Node API as a separate service with the same environment variables and a production MongoDB connection. Set `CLIENT_URL` to the deployed frontend origin, use HTTPS, and set `NODE_ENV=production` so auth cookies are secure. Configure the Gemini key only in the backend deployment secret store.
+
+## Demo flow
+
+1. Start `npm run dev:full`.
+2. Open the dashboard and choose **Try demo**.
+3. Review the deterministic score, matched skills, missing AWS/Docker/TypeScript requirements, and evidence rows.
+4. Upload a PDF/DOCX and paste a role description to exercise the authenticated path after registering a user.
+
+## Current limitations
+
+Resume parsing is intentionally conservative and text-based. Scanned/image-only PDFs need OCR before they can be analyzed. The core P0 comparison path is implemented; resume rewriting, interview generation, PDF report export, and version diffing remain follow-up product modules rather than mocked as complete features.

@@ -1,5 +1,5 @@
 {
-  "name": "matchwise",
+  "name": "careerlens-ai",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,25 +10,32 @@
     "dev:full": "concurrently \"vite\" \"nodemon server/index.js\"",
     "build": "vite build",
     "lint": "oxlint",
+    "test": "node --test test/matching.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "framer-motion": "^13.4.3",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.48.0",
+    "mammoth": "^1.12.3",
     "mongoose": "^9.10.2",
     "multer": "^2.4.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-is": "^19.3.0",
     "react-router-dom": "^7.18.4",
     "recharts": "^3.10.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
